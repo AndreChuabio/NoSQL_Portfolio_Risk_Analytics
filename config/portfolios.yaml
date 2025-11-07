@@ -1,0 +1,41 @@
+PORT_A_TechGrowth:
+  sector_limits:
+    Technology:
+      min: 0.4
+      max: 0.6
+    Energy:
+      min: 0.05
+      max: 0.15
+  position_size:
+    min: 0.02
+    max: 0.1
+  rebalance_frequency: weekly
+
+PORT_B_EnergyTilt:
+  sector_limits:
+    Energy:
+      min: 0.25
+      max: 0.4
+    Technology:
+      min: 0.1
+      max: 0.25
+  position_size:
+    min: 0.03
+    max: 0.12
+  rebalance_frequency: monthly
+
+PORT_C_BalancedCore:
+  sector_limits:
+    Technology:
+      min: 0.2
+      max: 0.35
+    Financials:
+      min: 0.15
+      max: 0.25
+    Energy:
+      min: 0.1
+      max: 0.2
+  position_size:
+    min: 0.02
+    max: 0.08
+  rebalance_frequency: monthly

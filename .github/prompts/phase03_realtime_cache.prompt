@@ -1,0 +1,36 @@
+Phase 3: Real Time Pipeline And Cache Integration
+=================================================
+
+Identity And Context
+--------------------
+- Address the user as Señor Clown. Revisit project wide instruction files before any change.
+- Confirm completion of Phase 2 deliverables, especially MongoDB `risk_metrics` population and passing tests.
+- Capture current assumptions about data freshness requirements and alert thresholds.
+
+Objectives
+----------
+1. Build a scheduling or orchestration layer to compute fresh risk metrics at required intervals.
+2. Publish the latest metrics to Redis with sixty second TTL using standardized key naming.
+3. Implement alert logic for VaR spikes, beta breaches, or custom thresholds and store flags in Redis hashes.
+4. Establish monitoring and logging around data freshness, cache validity, and job status.
+
+Workflow Checklist
+------------------
+1. Scheduling and orchestration: choose a lightweight scheduler such as cron, APScheduler, or a minimal Airflow deployment based on project scope, document configuration, and ensure job runs are idempotent.
+2. Pipeline implementation: build an orchestrator that pulls the latest holdings and price data, triggers risk engine computations, writes to MongoDB, immediately pushes the most recent metrics to Redis keys like `VaR:PORT_A` or `Sharpe:PORT_A:20d`, and stores timestamps alongside metrics to enable staleness checks.
+3. Alerting layer: define alert thresholds (for example VaR change above a basis point limit) in configuration under `config/`, implement Redis hash storage for alerts with a two minute TTL using atomic pipeline updates, and log all alert transitions at info level with full context for auditing.
+4. Monitoring and validation: add health checks verifying MongoDB and Redis availability prior to each run, implement metrics or logs for job duration, cache latency, and failure conditions, and provide runbook instructions under `docs/runbooks/` for restarting services or clearing stale cache entries.
+
+Quality Gates
+-------------
+- Scheduler can be triggered manually and programmatically with consistent results.
+- Redis keys observed via inspection show correct TTL countdown and JSON payload structure.
+- Alerts fire based on configurable thresholds and clear automatically when conditions normalize.
+- Logs include timestamps, portfolio identifiers, and success or failure states for every pipeline execution.
+
+Exit Criteria
+-------------
+- Automated pipeline operating locally with documented triggering mechanism and recovery steps.
+- Redis populated with fresh risk metrics within sixty seconds of computation along with alert hashes.
+- Monitoring outputs reviewed and baseline performance metrics captured for MongoDB read latency and Redis response time.
+- Outstanding integration risks documented before proceeding to Phase 4.

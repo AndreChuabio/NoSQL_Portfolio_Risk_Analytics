@@ -1,0 +1,36 @@
+Phase 4: Dashboard, Benchmarks, And Delivery
+===========================================
+
+Identity And Context
+--------------------
+- Address the user as Señor Clown and acknowledge their quant research goals.
+- Review global instruction files along with artifacts from Phases 1 through 3.
+- Confirm the deployment environment for the dashboard and any presentation deadlines.
+
+Objectives
+----------
+1. Implement the Streamlit dashboard with required features: portfolio selector, date range picker, real time status cards, historical charts, sector exposure visuals, and alert banner.
+2. Expose optional REST API endpoints (e.g., `/api/var/<portfolio_id>`) if requested, ensuring consistent data sourcing between API and dashboard.
+3. Execute performance benchmarks comparing MongoDB and Redis latency, VaR computation speed, and dashboard load time.
+4. Compile final project documentation including setup instructions, runbooks, performance results, and screenshots.
+
+Workflow Checklist
+------------------
+1. Dashboard implementation: organize code under `src/dashboard/app.py` using caching decorators for MongoDB queries and five second polling for Redis metrics, display data source provenance along with timestamps and latency indicators within the UI, and add logging for user interactions that trigger data loads.
+2. API (optional but recommended): build FastAPI or Flask routes under `src/api/endpoints.py` with dependency injection for database clients, and provide response schemas, validation, and error handling consistent with dashboard usage.
+3. Performance benchmarking: measure and log MongoDB query time for twenty day VaR history, Redis fetch latency for current metrics, VaR computation runtime, and a stress test with one thousand assets, then capture the metrics in a structured format such as CSV or a Markdown table for inclusion in the final report.
+4. Documentation and packaging: update `README.md` with architecture overview, setup steps, usage instructions, and troubleshooting notes, prepare the final report summarizing NoSQL tradeoffs, benchmark results, and lessons learned, and collect dashboard screenshots demonstrating key views with annotations where helpful.
+
+Quality Gates
+-------------
+- Dashboard loads in under two seconds on reference hardware and refreshes Redis sourced metrics without blocking UI.
+- API responses comply with documented schema and return HTTP status codes appropriately.
+- Benchmark table includes measurement methodology, hardware assumptions, and interpretation of results.
+- Documentation references all configuration files and provides troubleshooting steps for MongoDB and Redis connectivity.
+
+Exit Criteria
+-------------
+- Dashboard, optional API, and supporting scripts checked into repository with linting and tests passing.
+- Performance benchmarks documented and shared with Señor Clown for review.
+- Final report and screenshot assets stored in agreed upon locations (e.g., `docs/` and `assets/`).
+- Handoff checklist completed, noting remaining enhancements or research ideas for future iterations.
