@@ -33,6 +33,9 @@ env/
 *.swo
 *~
 
+# Agent Instructions and Prompts - NEVER COMMIT
+.github/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 *.ipynb_checkpoints/
