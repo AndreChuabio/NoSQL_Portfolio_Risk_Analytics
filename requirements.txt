@@ -5,3 +5,5 @@ pyarrow>=12.0.0
 pymongo>=4.6.0
 redis>=4.5.0
 pyyaml>=6.0.0
+streamlit>=1.25.0
+plotly>=5.14.0
