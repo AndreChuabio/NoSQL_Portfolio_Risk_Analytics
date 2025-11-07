@@ -1,9 +1,9 @@
 # Teammate Setup Guide - START HERE
 
 **For:** NoSQL Portfolio Risk Analytics Project  
-**Team:** Andre Chuabio + Your Name  
+**Team:** Andre Chuabio + Aengus Martin Donaire  
 **Infrastructure:** Cloud-based (MongoDB Atlas + Redis Cloud)  
-**Current Status:** Phase 2 Complete, Ready for Phase 3 (Dashboard)
+**Current Status:** Phase 3 Complete - Dashboard Live
 
 ---
 
@@ -30,6 +30,13 @@ source .venv/bin/activate  # macOS/Linux
 # Install packages
 pip install -r requirements.txt
 ```
+
+**Key Dependencies:**
+- `streamlit>=1.25.0` - Dashboard framework
+- `plotly>=5.14.0` - Interactive charts
+- `pymongo>=4.6.0` - MongoDB client
+- `redis>=4.5.0` - Redis client
+- `pandas>=2.0.0` - Data manipulation
 
 ### Step 3: Set Environment Variables
 
@@ -62,32 +69,23 @@ MongoDB connected: {'ok': 1.0}
 Redis Verification: ALL TESTS PASSED
 ```
 
-### Step 5: Check Database Contents
+### Step 5: Launch the Dashboard
 
-```python
-# Run in Python shell or create a quick test script
-from config.mongodb_config import get_mongo_client, get_database
+```bash
+# Option 1: Use the launch script (easiest)
+./run_dashboard.sh
 
-client = get_mongo_client()
-db = get_database(client)
-
-print("Collections:", db.list_collection_names())
-print("Price documents:", db.prices.count_documents({}))
-print("Portfolio snapshots:", db.portfolio_holdings.count_documents({}))
-print("Risk metrics:", db.risk_metrics.count_documents({}))
+# Option 2: Manual launch
+PYTHONPATH=$PWD streamlit run src/dashboard/app.py
 ```
 
-**Expected output:**
-- Collections: `['prices', 'portfolio_holdings', 'risk_metrics']`
-- Price documents: `10,020`
-- Portfolio snapshots: `1,503`
-- Risk metrics: `1,443`
+The dashboard will open at **http://localhost:8501**
 
 ---
 
 ## What You Have Access To
 
-Andre has already completed Phases 1 and 2:
+All 3 phases are complete:
 
 **Phase 1 (Week 1) - Data Foundation:**
 - 2 years of price data for 20 tickers (Technology, Energy, Financials, Healthcare, Consumer, Industrials)
@@ -98,11 +96,63 @@ Andre has already completed Phases 1 and 2:
 - VaR, Expected Shortfall, Sharpe Ratio, Beta calculations implemented
 - Historical risk metrics computed for all portfolio snapshots
 - MongoDB collection: `risk_metrics` (1,443 documents)
+- Redis cache integration with 60s TTL
+
+**Phase 3 (Week 3) - Dashboard & Analytics:**
+- Streamlit dashboard with real-time metrics
+- Interactive Plotly charts (VaR, Sharpe, Beta, Volatility)
+- Sector exposure visualization
+- Alert system with configurable thresholds
+- Performance benchmarks documented
 - Redis cache configured (60-second TTL for latest metrics)
 - Full test suite: 28/28 tests passing
 
-**Ready for Phase 3 (Week 3) - Dashboard Development:**
-Your primary task is building the Streamlit dashboard to visualize these metrics.
+---
+
+## Dashboard Features (Phase 3 - COMPLETE)
+
+### How to Use the Dashboard
+
+1. **Launch**: Run `./run_dashboard.sh` or `PYTHONPATH=$PWD streamlit run src/dashboard/app.py`
+2. **Access**: Open browser to http://localhost:8501
+3. **Select Portfolio**: Use sidebar dropdown (PORT_A, PORT_B, or PORT_C)
+4. **Adjust Time Range**: Slide the "Historical Window" slider (7-365 days)
+5. **Monitor Alerts**: Red/orange banners appear when thresholds breached
+6. **View Metrics**: Real-time cards show latest VaR, ES, Sharpe, Beta
+7. **Analyze Trends**: Interactive charts allow zoom/pan for detailed analysis
+
+### Dashboard Components
+
+**Sidebar Controls:**
+- Portfolio selector (3 options)
+- Date range picker (7-365 days, default 60)
+- Refresh data button
+- Alert threshold reference
+
+**Main View:**
+- Alert banner (color-coded: red=critical, orange=warning, green=healthy)
+- 4 metric cards (VaR, Expected Shortfall, Sharpe, Beta)
+- Data source indicator (Redis or MongoDB)
+- 4 historical trend charts (VaR, Sharpe, Beta, Volatility)
+- Sector exposure pie chart
+- Performance metrics footer (query latencies)
+
+**Alert Thresholds:**
+- VaR Critical: < -2.0%
+- VaR Warning: < -1.5%
+- Beta High: > 1.5
+- Beta Warning: > 1.3
+- Volatility High: > 30%
+- Sharpe Negative: >10 consecutive days
+
+### Dashboard Files
+
+```
+src/dashboard/
+├── app.py              # Main Streamlit application (502 lines)
+├── data_queries.py     # MongoDB/Redis query layer (333 lines)
+└── alerts.py           # Alert threshold logic (221 lines)
+```
 
 ---
 
