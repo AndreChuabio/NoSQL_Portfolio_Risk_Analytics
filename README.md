@@ -1,5 +1,10 @@
 # NoSQL Portfolio Risk Analytics Dashboard
 
+![Phase 1 Complete](https://img.shields.io/badge/Phase%201-Complete-brightgreen)
+![MongoDB](https://img.shields.io/badge/MongoDB-Deployed-success)
+![Redis](https://img.shields.io/badge/Redis-Configured-success)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+
 A portfolio-level risk analytics system demonstrating NoSQL advantages over traditional relational databases using MongoDB for persistent storage and Redis for real-time caching of financial risk metrics.
 
 **Authors:** Andre Chuabio, Aengus Martin Donaire  
@@ -254,8 +259,9 @@ pytest --cov=src tests/
 ## Documentation
 
 - **[Proposal.md](Proposal.md)**: Full project proposal with problem statement and technical architecture
-- **[docs/status/phase1_status.md](docs/status/phase1_status.md)**: Phase 1 completion summary
-- **[docs/runbooks/container_setup.md](docs/runbooks/container_setup.md)**: Docker setup guide
+- **[docs/status/phase1_status.md](docs/status/phase1_status.md)**: Phase 1 completion summary with metrics
+- **[docs/PHASE1_QUICKSTART.md](docs/PHASE1_QUICKSTART.md)**: Step-by-step guide to reproduce Phase 1 setup
+- **[docs/runbooks/container_setup.md](docs/runbooks/container_setup.md)**: Docker setup guide (optional)
 
 ---
 
