@@ -1,18 +1,18 @@
 # Phase 1 Quick Start Guide
 
 **Status:** Complete ✓  
-**Date:** November 7, 2025
+**Date:** November 7, 2025  
+**Infrastructure:** Cloud-based (MongoDB Atlas + Redis Cloud)
 
-This guide demonstrates how to reproduce the Phase 1 database setup from scratch.
+This guide demonstrates how to reproduce the Phase 1 database setup from scratch using cloud databases.
 
 ---
 
 ## Prerequisites
 
-Ensure you have installed:
 - Python 3.9+
-- MongoDB (local, Docker, or Atlas cluster access)
-- Redis (local or Docker)
+- MongoDB Atlas account (free tier: https://www.mongodb.com/cloud/atlas/register)
+- Redis Cloud account (free tier: https://redis.com/try-free)
 
 ---
 
@@ -35,29 +35,55 @@ pip install -r requirements.txt
 
 ## Step 2: Configure Database Connections
 
-### MongoDB
+### MongoDB Atlas Setup
 
-Set your MongoDB connection string:
+1. **Create MongoDB Atlas Cluster** (if not already done):
+   - Go to https://cloud.mongodb.com
+   - Create free M0 cluster (takes 3-5 minutes to provision)
+   - Navigate to Database Access → Add Database User (create username/password)
+   - Navigate to Network Access → Add IP Address → Allow Access from Anywhere (0.0.0.0/0)
 
-```bash
-# For local MongoDB
-export MONGODB_URI="mongodb://root:example@localhost:27017/?authSource=admin"
+2. **Get Connection String**:
+   - Click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string (format: `mongodb+srv://...`)
+   - Replace `<password>` with your database user password
 
-# OR for MongoDB Atlas
-export MONGODB_URI="mongodb+srv://<username>:<password>@cluster.mongodb.net/"
-```
+3. **Set Environment Variable**:
+   ```bash
+   export MONGODB_URI="mongodb+srv://<username>:<password>@clusterac1.od00ttk.mongodb.net/?retryWrites=true&w=majority"
+   ```
 
-### Redis
+   **Tip**: Add to `~/.zshrc` to persist across terminal sessions:
+   ```bash
+   echo 'export MONGODB_URI="mongodb+srv://..."' >> ~/.zshrc
+   source ~/.zshrc
+   ```
 
-Start Redis (if not already running):
+### Redis Cloud Setup
 
-```bash
-# Local installation
-redis-server
+1. **Create Redis Cloud Database**:
+   - Go to https://redis.com/try-free
+   - Sign up for free account (30MB free tier)
+   - Create new subscription → Choose "Fixed" plan (free)
+   - Create database → Note the **Public Endpoint** and **Default User Password**
 
-# OR via Docker
-docker run -d -p 6379:6379 redis:7.2-alpine
-```
+2. **Set Environment Variables**:
+   ```bash
+   export REDIS_HOST="redis-12345.c123.us-east-1-1.ec2.redns.redis-cloud.com"
+   export REDIS_PORT="12345"
+   export REDIS_PASSWORD="your_redis_password"
+   ```
+
+   **Tip**: Add to `~/.zshrc`:
+   ```bash
+   echo 'export REDIS_HOST="redis-12345..."' >> ~/.zshrc
+   echo 'export REDIS_PORT="12345"' >> ~/.zshrc
+   echo 'export REDIS_PASSWORD="your_password"' >> ~/.zshrc
+   source ~/.zshrc
+   ```
+
+**Note**: Phase 1 only requires MongoDB. Redis will be used in Phase 2 for caching risk metrics.
 
 ---
 
@@ -117,11 +143,26 @@ print("Prices indexes:", list(db.prices.list_indexes()))
 print("Holdings indexes:", list(db.portfolio_holdings.list_indexes()))
 ```
 
-### Redis Verification
+### Redis Verification (Optional - Phase 2)
+
+**Phase 1 does not require Redis.** Verification will be needed when starting Phase 2.
+
+To verify Redis Cloud connectivity once configured:
 
 ```bash
-redis-cli ping
-# Expected output: PONG
+# Run Python verification script
+PYTHONPATH=/Users/andrechuabio/NoSQL_Project python src/ingestion/verify_redis.py
+```
+
+Expected output:
+```
+✓ Redis PING successful
+✓ String write/read successful
+✓ TTL set successfully
+✓ JSON cache successful
+✓ Hash operations successful
+✓ Cleanup successful
+Redis Verification: ALL TESTS PASSED
 ```
 
 ---
@@ -161,15 +202,23 @@ redis-cli ping
 
 ## Troubleshooting
 
-### MongoDB Connection Failed
+### MongoDB Atlas Connection Failed
 
 ```bash
-# Verify MongoDB is running
-mongosh --eval "db.adminCommand('ping')"
-
-# Check environment variable
+# Check environment variable is set
 echo $MONGODB_URI
+
+# Test connection with mongosh (if installed)
+mongosh "$MONGODB_URI" --eval "db.adminCommand('ping')"
+
+# Verify from Python
+python -c "from config.mongodb_config import get_mongo_client; print('Connected:', get_mongo_client().admin.command('ping'))"
 ```
+
+**Common issues:**
+- Password contains special characters → URL-encode them (e.g., `@` becomes `%40`)
+- IP not whitelisted → Add 0.0.0.0/0 in Atlas Network Access
+- Wrong database user credentials → Check Database Access in Atlas
 
 ### Missing Price Data
 
