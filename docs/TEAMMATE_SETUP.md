@@ -40,15 +40,34 @@ pip install -r requirements.txt
 
 ### Step 3: Set Environment Variables
 
-**Get credentials from Andre** (MongoDB URI, Redis host/port/password), then run the setup script:
+**Get credentials from Andre** (MongoDB URI, Redis host/port/password), then add them to your shell config:
+
+**For macOS/Linux (zsh or bash):**
 
 ```bash
-source setup_env.sh
+# Open your shell config file
+nano ~/.zshrc  # or ~/.bashrc if using bash
+
+# Add these lines at the end (replace with actual credentials from Andre):
+export MONGODB_URI="mongodb+srv://ac233_db_user:password@clusterac1.od00ttk.mongodb.net/?retryWrites=true&w=majority"
+export REDIS_HOST="redis-19109.c282.east-us-mz.azure.redns.redis-cloud.com"
+export REDIS_PORT="19109"
+export REDIS_PASSWORD="your_redis_password_here"
+
+# Save and exit (Ctrl+O, Enter, Ctrl+X in nano)
+
+# Load the credentials
+source ~/.zshrc  # or source ~/.bashrc
 ```
 
-Follow the prompts to enter your credentials. The script will set them for the current session and optionally save them to your `~/.zshrc` file.
-
-**Alternative:** See `docs/ENV_SETUP_GUIDE.md` for manual setup instructions.
+**For Windows (PowerShell):**
+```powershell
+# Add to your PowerShell profile
+$env:MONGODB_URI="mongodb+srv://..."
+$env:REDIS_HOST="redis-xxxxx.redns.redis-cloud.com"
+$env:REDIS_PORT="12345"
+$env:REDIS_PASSWORD="your_password"
+```
 
 ### Step 4: Verify Connections
 
@@ -72,12 +91,14 @@ Redis Verification: ALL TESTS PASSED
 ### Step 5: Launch the Dashboard
 
 ```bash
-# Option 1: Use the launch script (easiest)
+# Use the launch script (automatically loads credentials from ~/.zshrc)
 ./run_dashboard.sh
-
-# Option 2: Manual launch
-PYTHONPATH=$PWD streamlit run src/dashboard/app.py
 ```
+
+If you get a credential error, make sure you:
+1. Added credentials to `~/.zshrc`
+2. Ran `source ~/.zshrc`
+3. Credentials are correct (no typos)
 
 The dashboard will open at **http://localhost:8501**
 

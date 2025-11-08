@@ -1,11 +1,11 @@
 # Portfolio Risk Analytics - Quick Start Guide
 
-**Last Updated:** 2025-11-07  
+**Last Updated:** 2025-11-08  
 **Status:** Phase 3 Complete - Production Ready
 
 ---
 
-## Get Started in 3 Commands
+## Get Started in 4 Steps
 
 ```bash
 # 1. Clone and setup
@@ -13,14 +13,31 @@ git clone https://github.com/AndreChuabio/NoSQL_Portfolio_Risk_Analytics.git
 cd NoSQL_Portfolio_Risk_Analytics
 pip install -r requirements.txt
 
-# 2. Configure environment (get credentials from team)
-source setup_env.sh
+# 2. Add credentials to your ~/.zshrc (get from team lead)
+# Add these lines to ~/.zshrc:
+export MONGODB_URI="mongodb+srv://username:password@cluster.mongodb.net/?retryWrites=true&w=majority"
+export REDIS_HOST="redis-xxxxx.redns.redis-cloud.com"
+export REDIS_PORT="12345"
+export REDIS_PASSWORD="your_redis_password"
 
-# 3. Launch dashboard
+# 3. Load credentials
+source ~/.zshrc
+
+# 4. Launch dashboard
 ./run_dashboard.sh
 ```
 
 **Dashboard opens at:** http://localhost:8501
+
+---
+
+## Credentials (Team Members Only)
+
+Ask team lead for:
+- MongoDB Atlas URI
+- Redis Cloud Host, Port, Password
+
+Add them to `~/.zshrc` as shown above, then run `source ~/.zshrc`
 
 ---
 
