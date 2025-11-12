@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,17 @@ THRESHOLDS = {
     "sharpe_negative_days": 10,  # Negative Sharpe for > 10 days
     "volatility_high": 0.30,  # Annualized volatility > 30%
 }
+
+# Add trend/spike thresholds without changing the original dict
+THRESHOLDS.update({
+    # VaR spike: day-over-day worsening (by absolute magnitude)
+    "var_spike_critical_pct": 0.20,  # ≥ +20% worse vs yesterday
+    "var_spike_warning_pct": 0.10,   # ≥ +10% worse vs yesterday
+
+    # Beta rising trend over the last N days (least-squares slope)
+    "beta_trend_days": 5,
+    "beta_trend_min_slope": 0.02,    # per-day slope considered "rising fast"
+})
 
 
 def check_var_threshold(var_value: Optional[float]) -> Tuple[str, str, str]:
@@ -151,6 +163,99 @@ def check_sharpe_persistence(historical_df: Optional[pd.DataFrame]) -> Tuple[str
         logger.error(f"Error checking Sharpe persistence: {e}")
         return "none", "", ""
 
+def check_var_spike(historical_df: Optional[pd.DataFrame]) -> Tuple[str, str, str]:
+    """
+    Detect day-over-day VaR 'spikes' based on absolute magnitude change.
+    Expects a column named 'VaR' (case-insensitive accepted).
+    Returns (severity, type, message).
+    """
+    if historical_df is None or historical_df.empty:
+        return "none", "", ""
+
+    # Be flexible about column name casing
+    col_candidates = [c for c in historical_df.columns if c.lower() == "var"]
+    if not col_candidates:
+        return "none", "", ""
+    col = col_candidates[0]
+
+    try:
+        series = historical_df[col].dropna()
+        if len(series) < 2:
+            return "none", "", ""
+
+        prev, curr = float(series.iloc[-2]), float(series.iloc[-1])
+        # Compare by magnitude (both typically negative)
+        prev_mag, curr_mag = abs(prev), abs(curr)
+        if prev_mag == 0:
+            return "none", "", ""
+
+        change_pct = (curr_mag - prev_mag) / prev_mag  # e.g., +0.25 = 25% worse
+        crit = THRESHOLDS["var_spike_critical_pct"]
+        warn = THRESHOLDS["var_spike_warning_pct"]
+
+        if change_pct >= crit:
+            return (
+                "critical",
+                "VaR Spike",
+                f"VaR worsened by {change_pct:.0%} day-over-day "
+                f"({curr:.2%} vs {prev:.2%})"
+            )
+        elif change_pct >= warn:
+            return (
+                "warning",
+                "VaR Rising",
+                f"VaR worsened by {change_pct:.0%} day-over-day "
+                f"({curr:.2%} vs {prev:.2%})"
+            )
+        else:
+            return "healthy", "", ""
+    except Exception as e:
+        logger.error(f"Error checking VaR spike: {e}")
+        return "none", "", ""
+
+
+def check_beta_trend(historical_df: Optional[pd.DataFrame], latest_beta: Optional[float]) -> Tuple[str, str, str]:
+    """
+    Flag 'rising beta' when (a) latest beta is already elevated, and
+    (b) the short-term slope over the last N days is positive and large enough.
+    Expects a column named 'Beta' (case-insensitive accepted).
+    Returns (severity, type, message).
+    """
+    if historical_df is None or historical_df.empty or latest_beta is None:
+        return "none", "", ""
+
+    col_candidates = [c for c in historical_df.columns if c.lower() == "beta"]
+    if not col_candidates:
+        return "none", "", ""
+    col = col_candidates[0]
+
+    try:
+        beta_series = historical_df[col].dropna()
+        n = THRESHOLDS["beta_trend_days"]
+        if len(beta_series) < n:
+            return "none", "", ""
+
+        # Least-squares slope over last n points
+        y = beta_series.iloc[-n:].to_numpy(dtype=float)
+        x = np.arange(len(y))
+        slope = np.polyfit(x, y, 1)[0]  # per-day slope
+
+        # Only care if latest beta is already above warning threshold
+        if latest_beta > THRESHOLDS["beta_warning"] and slope >= THRESHOLDS["beta_trend_min_slope"]:
+            # Escalate to critical if also above high threshold
+            sev = "critical" if latest_beta > THRESHOLDS["beta_high"] else "warning"
+            return (
+                sev,
+                "Rising Beta",
+                f"Beta rising (slope≈{slope:.3f}/day), latest {latest_beta:.2f} "
+                f"(warn ≥ {THRESHOLDS['beta_warning']:.2f}, high ≥ {THRESHOLDS['beta_high']:.2f})"
+            )
+        return "healthy", "", ""
+    except Exception as e:
+        logger.error(f"Error checking Beta trend: {e}")
+        return "none", "", ""
+
+
 
 def evaluate_all_alerts(
     latest_metrics: Optional[Dict],
@@ -213,6 +318,24 @@ def evaluate_all_alerts(
             "message": message
         })
 
+    # Check VaR day-over-day spike (trend-sensitive)
+    severity, alert_type, message = check_var_spike(historical_df)
+    if severity in ["critical", "warning"]:
+        alerts.append({
+            "severity": severity,
+            "type": alert_type,
+            "message": message
+        })
+
+    # Check Beta rising trend (uses short-term slope)
+    severity, alert_type, message = check_beta_trend(historical_df, beta_value)
+    if severity in ["critical", "warning"]:
+        alerts.append({
+            "severity": severity,
+            "type": alert_type,
+            "message": message
+        })
+
     # Sort by severity (critical first)
     severity_order = {"critical": 0, "warning": 1}
     alerts.sort(key=lambda x: severity_order.get(x["severity"], 2))
@@ -238,7 +361,6 @@ def get_alert_color(severity: str) -> str:
         "none": "gray"
     }
     return color_map.get(severity, "gray")
-
 
 def get_threshold_info() -> Dict[str, any]:
     """
