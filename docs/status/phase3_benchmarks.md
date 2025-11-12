@@ -273,11 +273,11 @@ WHERE p.portfolio_id = 'PORT_A' AND p.date = (SELECT MAX(date) FROM portfolios)
 - Graceful error handling
 
 **Areas for Improvement:**
-1) **Increase Redis TTL to 5–10 minutes** for non-sensitive reads (metric cards, last computed snapshot). Expect a big jump in cache hit rate and a drop in median + p95 dashboard latencies. :contentReference[oaicite:8]{index=8}  
-2) **Upgrade MongoDB to M10+** (or use a local instance for demos) to cut both network and connection constraints; this should bring single-doc reads closer to the 100ms target. :contentReference[oaicite:9]{index=9}  
-3) **Add a compound index on `(portfolio_id, date)` and a VaR-focused index** for the “latest metric” and time-series reads; you already called this out—ship it. :contentReference[oaicite:10]{index=10}  
-4) **Pre-aggregate sector totals** in MongoDB (pipeline or materialized view) to reduce chart-side processing. :contentReference[oaicite:11]{index=11}  
-5) **Lazy-load charts / tab the UI** so the initial render fetches only what’s visible, keeping TTFB low as you grow features. :contentReference[oaicite:12]{index=12}
+1) **Increase Redis TTL to 5–10 minutes** for non-sensitive reads (metric cards, last computed snapshot). Expect a big jump in cache hit rate and a drop in median + p95 dashboard latencies.
+2) **Upgrade MongoDB to M10+** (or use a local instance for demos) to cut both network and connection constraints; this should bring single-doc reads closer to the 100ms target.
+3) **Add a compound index on `(portfolio_id, date)` and a VaR-focused index** for the “latest metric” and time-series reads; you already called this out—ship it.
+4) **Pre-aggregate sector totals** in MongoDB (pipeline or materialized view) to reduce chart-side processing.
+5) **Lazy-load charts / tab the UI** so the initial render fetches only what’s visible, keeping TTFB low as you grow features.
 
 ---
 
