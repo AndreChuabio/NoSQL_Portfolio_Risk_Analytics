@@ -328,7 +328,7 @@ python -m src.risk_engine.compute_historical_metrics
 - [ ] Sector exposure visualization (pie/bar charts)
 - [ ] Alert banners for risk threshold breaches
 - [ ] Performance benchmarks (query latency measurements)
-- [ ] Final report with NoSQL tradeoff analysis
+- [x] Final report with NoSQL tradeoff analysis
 - [ ] Optional: REST API with FastAPI
 
 ---
