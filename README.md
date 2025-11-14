@@ -328,23 +328,50 @@ python -m src.risk_engine.compute_historical_metrics
 - [ ] Sector exposure visualization (pie/bar charts)
 - [ ] Alert banners for risk threshold breaches
 - [ ] Performance benchmarks (query latency measurements)
-- [ ] Final report with NoSQL tradeoff analysis
+- [x] Final report with NoSQL tradeoff analysis
 - [ ] Optional: REST API with FastAPI
 
 ---
 
 ## Performance Benchmarks
 
-| Metric | Target | Actual (Phase 2) |
-|--------|--------|------------------|
-| MongoDB historical query (20-day VaR) | <100ms | TBD (Phase 3) |
-| Redis current metric fetch | <10ms | TBD (Phase 3) |
+| Metric | Target | Actual |
+|--------|--------|--------|
+| MongoDB historical query (60d) | <100ms | 147–308ms (Atlas M0) |
+| MongoDB latest metric (single doc) | <100ms | 145–480ms (Atlas M0) |
+| Redis current metric fetch | <10ms | 5–8ms |
 | VaR computation (30 assets, 1000 sims) | <500ms | ~673ms (includes all 4 metrics) |
 | Batch processing rate | N/A | 1.49 snapshots/sec |
-| Dashboard initial load | <2s | TBD (Phase 3) |
+| Dashboard initial load | <2s | ~1.5s |
 | Success rate (historical backfill) | >90% | 96.0% (1,443/1,503) |
 
 ---
+
+## Evaluation & Reflection
+
+**Why MongoDB + Redis works here**
+- **Flexible time-series model:** Risk metrics are appended per (portfolio_id, date) with nested `simulation_params`, which is natural in BSON and simple to evolve.
+- **Low-latency reads:** “Latest metric” and “hot” values are perfect for Redis, which we hit in ~5–8ms when the cache is warm. 
+- **Acceptable trade-off on free tiers:** Atlas network adds ~100–200ms baseline; with Streamlit caching the dashboard still lands at ~1.5s TTFB.
+
+**What we would improve next**
+- **Bump TTL to 5–10 minutes** for non-sensitive cards to raise cache hit rate far above the ~5% we see with a 60s TTL. 
+- **Add compound indexes** on `(portfolio_id, date)` and a VaR-focused index to tighten p95s for “latest/historical” reads. 
+- **Upgrade Atlas to M10+** (or run local for demos) to avoid pool exhaustion and cut network overhead on concurrent loads. 
+
+## Known Limitations & Next Steps
+
+**Limitations**
+- **Cloud variance:** Latency varies by time of day and region; p95s are indicative, not absolute.
+- **TTL vs freshness:** A 60s TTL keeps metrics fresh but tanks cache hit rate (~5%). 
+- **Free-tier caps:** M0 connection limits drive the observed errors at 10–20 simulated users. 
+
+**Next Steps**
+1. Increase Redis TTL (5–10 min) and measure new hit rate and p95s.
+2. Add indexes + pre-aggregation for sector/summary views.
+3. Migrate Atlas to M10+ and re-run the concurrency test suite.
+4. Optional: lazy-load charts and adopt tabs to reduce initial fetch volume.
+
 
 ## Testing
 
