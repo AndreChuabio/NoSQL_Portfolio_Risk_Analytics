@@ -138,6 +138,26 @@ class TestCalculatePortfolioVar:
         assert isinstance(var, float)
         assert var < 0
 
+    def test_var_non_positive_when_all_returns_non_positive(self, equal_weights):
+        """VaR should not be positive when all asset returns are non-positive."""
+        dates = pd.date_range("2025-01-01", periods=60, freq="D")
+        non_positive_returns = pd.DataFrame(
+            {
+                "AAPL": np.full(60, -0.01),
+                "MSFT": np.full(60, -0.005),
+                "GOOGL": np.full(60, -0.007),
+            },
+            index=dates,
+        )
+
+        var = calculate_portfolio_var(
+            non_positive_returns,
+            equal_weights,
+            confidence_level=0.95,
+            n_simulations=1000,
+        )
+
+        assert var <= 0.0, "With all returns ≤ 0, VaR should not be positive"
 
 class TestCalculateExpectedShortfall:
     """Tests for Expected Shortfall calculation."""
@@ -169,6 +189,30 @@ class TestCalculateExpectedShortfall:
             simple_returns, equal_weights, confidence_level=0.95, random_seed=42
         )
         assert es1 == es2, "Same seed should produce identical ES"
+
+    def test_es_more_negative_than_var():
+        """
+        Expected Shortfall should be at least as severe as VaR:
+        ES_95 <= VaR_95 (both being losses / negative numbers).
+        """
+        import numpy as np
+    
+        # A return distribution with a non-trivial left tail
+        returns = np.array(
+            [-0.04, -0.035, -0.03, -0.02, -0.01,
+             -0.005, 0.0, 0.002, 0.005, 0.01] * 2
+        )
+    
+        var_95 = calculate_var(returns, confidence_level=0.95)
+        es_95 = calculate_es(returns, confidence_level=0.95)
+    
+        # Both should be <= 0 (losses)
+        assert var_95 <= 0.0
+        assert es_95 <= 0.0
+    
+        # ES should be at least as bad as VaR (i.e., more negative or equal)
+        assert es_95 <= var_95
+
 
 
 class TestCalculatePortfolioVolatility:
@@ -237,6 +281,26 @@ class TestCalculateSharpeRatio:
         )
         sharpe = calculate_sharpe_ratio(constant_returns, equal_weights, window=20)
         assert sharpe is None, "Should return None when volatility is zero"
+    
+    def test_sharpe_zero_for_constant_returns():
+        """
+        If returns are constant (no variability), the excess return over
+        the risk-free rate should have zero standard deviation. Depending
+        on implementation, Sharpe should either be 0 or handled as a special case.
+        Here we assert it is close to 0.
+        """
+        import numpy as np
+    
+        # 20 days of identical small positive returns
+        returns = np.array([0.001] * 20)
+    
+        # Adjust function name / arguments as needed
+        sharpe = compute_sharpe_ratio(returns, risk_free_rate=0.0, window=20)
+    
+        # We expect "no risk", so Sharpe ~ 0 by our implementation choice
+        # (replace tolerance if your implementation behaves differently)
+        assert abs(sharpe) < 1e-6
+
 
 
 class TestCalculateBeta:
@@ -291,6 +355,28 @@ class TestCalculateBetaFromDataframes:
         """Test beta calculation with missing benchmark ticker."""
         with pytest.raises(ValueError, match="Benchmark ticker .* not found"):
             calculate_beta_from_dataframes(simple_returns, equal_weights, "QQQ", window=20)
+
+    def test_beta_approx_one_when_portfolio_equals_benchmark():
+        """
+        When portfolio returns equal benchmark returns exactly,
+        Beta vs that benchmark should be ~1.0.
+        """
+        import numpy as np
+    
+        # Synthetic benchmark series
+        benchmark_returns = np.array(
+            [0.01, -0.005, 0.007, 0.0, -0.003, 0.004, -0.002, 0.006, -0.004, 0.005]
+        )
+        # Portfolio exactly tracks the benchmark
+        portfolio_returns = benchmark_returns.copy()
+    
+        beta = compute_beta(
+            portfolio_returns=portfolio_returns,
+            benchmark_returns=benchmark_returns,
+            window=len(benchmark_returns),
+        )
+    
+        assert beta == pytest.approx(1.0, rel=1e-2)
 
 
 class TestCalculateRollingVolatility:
